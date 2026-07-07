@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { fetchStudent } from '../../api/students'
-import { createAttendance } from '../../api/attendance'
+import { fetchAttendanceByStudent, createAttendance, updateAttendance } from '../../api/attendance'
 import { createMemorization, createReview, createNote } from '../../api/quran'
 import { fetchMemorizationByStudent, fetchReviewsByStudent, fetchNotesByStudent } from '../../api/quran'
 import Card from '../../components/ui/Card'
@@ -58,9 +58,43 @@ export default function StudentDetail() {
     },
   })
 
+  const { data: todayAttendance } = useQuery({
+    queryKey: ['today-attendance', id],
+    queryFn: async () => {
+      const res = await fetchAttendanceByStudent(id)
+      const today = new Date().toISOString().split('T')[0]
+      return res.data.results?.find((a) => a.date === today) || null
+    },
+  })
+
+  const checkInMut = useMutation({
+    mutationFn: () => {
+      const now = new Date().toTimeString().split(' ')[0]
+      return createAttendance({
+        student: id,
+        date: new Date().toISOString().split('T')[0],
+        check_in_time: now,
+      })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['today-attendance', id] })
+      queryClient.invalidateQueries({ queryKey: ['attendance'] })
+    },
+  })
+
+  const checkOutMut = useMutation({
+    mutationFn: () => {
+      const now = new Date().toTimeString().split(' ')[0]
+      return updateAttendance(todayAttendance.id, { check_out_time: now })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['today-attendance', id] })
+      queryClient.invalidateQueries({ queryKey: ['attendance'] })
+    },
+  })
+
   const createMut = useMutation({
     mutationFn: (data) => {
-      if (modal === 'attendance') return createAttendance({ ...data, student: id })
       if (modal === 'memorization') return createMemorization({ ...data, student: id })
       if (modal === 'review') return createReview({ ...data, student: id })
       if (modal === 'note') return createNote({ ...data, student: id })
@@ -69,7 +103,6 @@ export default function StudentDetail() {
       queryClient.invalidateQueries({ queryKey: ['memorization', id] })
       queryClient.invalidateQueries({ queryKey: ['reviews', id] })
       queryClient.invalidateQueries({ queryKey: ['notes', id] })
-      queryClient.invalidateQueries({ queryKey: ['attendance'] })
       setModal(null)
       setForm({})
     },
@@ -112,9 +145,19 @@ export default function StudentDetail() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        <Button onClick={() => openModal('attendance')} variant="secondary" size="sm">
-          <span className="flex items-center gap-2"><CalendarCheck size={16} /> حضور</span>
-        </Button>
+        {!todayAttendance ? (
+          <Button onClick={() => checkInMut.mutate()} loading={checkInMut.isPending} size="sm">
+            <span className="flex items-center gap-2"><CalendarCheck size={16} /> تسجيل دخول</span>
+          </Button>
+        ) : todayAttendance.check_in_time && !todayAttendance.check_out_time ? (
+          <Button onClick={() => checkOutMut.mutate()} loading={checkOutMut.isPending} variant="secondary" size="sm">
+            <span className="flex items-center gap-2"><CalendarCheck size={16} /> تسجيل خروج</span>
+          </Button>
+        ) : (
+          <div className="px-4 py-2 rounded-lg bg-emerald-50 text-emerald-700 text-sm text-center flex items-center justify-center">
+            اكتمل الحضور اليوم
+          </div>
+        )}
         <Button onClick={() => openModal('memorization')} variant="secondary" size="sm">
           <span className="flex items-center gap-2"><BookOpen size={16} /> حفظ</span>
         </Button>
@@ -185,35 +228,6 @@ export default function StudentDetail() {
           )}
         </Card>
       </div>
-
-      {/* Attendance Modal */}
-      <Modal open={modal === 'attendance'} onClose={() => setModal(null)} title="تسجيل حضور">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            label="التاريخ"
-            type="date"
-            value={form.date || ''}
-            onChange={(e) => setForm({ ...form, date: e.target.value })}
-            required
-          />
-          <Input
-            label="وقت الدخول (اختياري)"
-            type="time"
-            value={form.check_in_time || ''}
-            onChange={(e) => setForm({ ...form, check_in_time: e.target.value })}
-          />
-          <Input
-            label="وقت الخروج (اختياري)"
-            type="time"
-            value={form.check_out_time || ''}
-            onChange={(e) => setForm({ ...form, check_out_time: e.target.value })}
-          />
-          <div className="flex gap-3 pt-2">
-            <Button type="submit" loading={createMut.isPending}>حفظ</Button>
-            <Button variant="secondary" onClick={() => setModal(null)}>إلغاء</Button>
-          </div>
-        </form>
-      </Modal>
 
       {/* Memorization Modal */}
       <Modal open={modal === 'memorization'} onClose={() => setModal(null)} title="تسجيل حفظ">
