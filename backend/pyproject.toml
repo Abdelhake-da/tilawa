@@ -1,0 +1,25 @@
+[project]
+name = "tilawa"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Mr Abdelhake",email = "abdelhake.da@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "django (>=6.0.6,<7.0.0)",
+    "django-rest-framework (>=0.1.0,<0.2.0)",
+    "djangorestframework-simplejwt (>=5.5.1,<6.0.0)",
+    "django-cors-headers (>=4.9.0,<5.0.0)",
+    "django-filter (>=25.2,<26.0)",
+    "psycopg2-binary (>=2.9.12,<3.0.0)",
+    "whitenoise (>=6.12.0,<7.0.0)",
+    "gunicorn (>=26.0.0,<27.0.0)",
+    "weasyprint (>=69.0,<70.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
