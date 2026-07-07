@@ -20,7 +20,7 @@ export default function Teachers() {
     queryKey: ['teachers'],
     queryFn: async () => {
       const res = await fetchTeachers()
-      return res.data
+      return res.data.results
     },
   })
 
@@ -42,7 +42,12 @@ export default function Teachers() {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    createMut.mutate(form)
+    const data = {
+      ...form,
+      teacher: form.teacher || null,
+      birth_date: form.birth_date || null,
+    }
+    createMut.mutate(data)
   }
 
   if (isLoading) return <LoadingSpinner />

@@ -5,7 +5,7 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 class TeacherSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(source="user.username", read_only=True)
+    username = serializers.CharField(source="user.username")
     first_name = serializers.CharField(source="user.first_name", required=False)
     last_name = serializers.CharField(source="user.last_name", required=False)
     password = serializers.CharField(write_only=True, required=True)
@@ -14,7 +14,7 @@ class TeacherSerializer(serializers.ModelSerializer):
     class Meta:
         model = Teacher
         fields = ("id", "username", "first_name", "last_name", "password", "bio")
-        read_only_fields = ("id", "username")
+        read_only_fields = ("id",)
 
     def create(self, validated_data):
         user_data = {
@@ -30,7 +30,7 @@ class TeacherSerializer(serializers.ModelSerializer):
 
 
 class GuardianSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(source="user.username", read_only=True)
+    username = serializers.CharField(source="user.username")
     first_name = serializers.CharField(source="user.first_name", required=False)
     last_name = serializers.CharField(source="user.last_name", required=False)
     password = serializers.CharField(write_only=True, required=True)
@@ -39,7 +39,7 @@ class GuardianSerializer(serializers.ModelSerializer):
     class Meta:
         model = Guardian
         fields = ("id", "username", "first_name", "last_name", "password", "relationship")
-        read_only_fields = ("id", "username")
+        read_only_fields = ("id",)
 
     def create(self, validated_data):
         user_data = {
@@ -64,7 +64,7 @@ class StudentSerializer(serializers.ModelSerializer):
         model = Student
         fields = ("id", "name", "guardian", "guardian_name", "teacher", "teacher_name",
                   "school", "birth_date", "enrollment_date", "is_active")
-        read_only_fields = ("id", "enrollment_date", "guardian_name", "teacher_name")
+        read_only_fields = ("id", "enrollment_date", "guardian_name", "teacher_name", "school", "is_active")
 
     def get_teacher_name(self, obj):
         if obj.teacher:
