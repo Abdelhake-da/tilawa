@@ -11,6 +11,12 @@ import Transfers from './pages/manager/Transfers'
 import TeacherDashboard from './pages/teacher/Dashboard'
 import StudentList from './pages/teacher/StudentList'
 import StudentDetail from './pages/teacher/StudentDetail'
+import GuardianDashboard from './pages/guardian/Dashboard'
+import ChildDetail from './pages/guardian/ChildDetail'
+import TeacherPayments from './pages/teacher/Payments'
+import ManagerPayments from './pages/manager/Payments'
+import ManagerCertificates from './pages/manager/Certificates'
+import GuardianCertificates from './pages/guardian/Certificates'
 function App() {
   const { user } = useAuth()
 
@@ -31,8 +37,8 @@ function App() {
         <Route path="teachers" element={<Teachers />} />
         <Route path="students" element={<Students />} />
         <Route path="transfers" element={<Transfers />} />
-        <Route path="payments" element={<div className="text-slate-500">المدفوعات — قريباً</div>} />
-        <Route path="certificates" element={<div className="text-slate-500">الشهادات — قريباً</div>} />
+        <Route path="payments" element={<ManagerPayments />} />
+        <Route path="certificates" element={<ManagerCertificates />} />
         
       </Route>
 
@@ -45,7 +51,7 @@ function App() {
         <Route path="dashboard" element={<TeacherDashboard />} />
         <Route path="students" element={<StudentList />} />
         <Route path="students/:id" element={<StudentDetail />} />
-        <Route path="payments" element={<div className="text-slate-500">المدفوعات — قريباً</div>} />
+        <Route path="payments" element={<TeacherPayments />} />
       </Route>
 
       <Route path="/guardian" element={
@@ -54,9 +60,9 @@ function App() {
         </ProtectedRoute>
       }>
         <Route index element={<Navigate to="/guardian/dashboard" replace />} />
-        <Route path="dashboard" element={<div className="text-slate-500">أطفالي — قريباً</div>} />
-        <Route path="children/:id" element={<div className="text-slate-500">تفاصيل الطفل — قريباً</div>} />
-        <Route path="certificates" element={<div className="text-slate-500">الشهادات — قريباً</div>} />
+        <Route path="dashboard" element={<GuardianDashboard />} />
+        <Route path="children/:id" element={<ChildDetail />} />
+        <Route path="certificates" element={<GuardianCertificates />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
