@@ -2,4 +2,8 @@ from django.apps import AppConfig
 
 
 class QuranConfig(AppConfig):
-    name = 'apps.quran'
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "apps.quran"
+
+    def ready(self):
+        from . import signals  # noqa: F401
