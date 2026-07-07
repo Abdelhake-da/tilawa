@@ -5,6 +5,9 @@ import Login from './pages/Login'
 import ManagerLayout from './components/layout/ManagerLayout'
 import TeacherLayout from './components/layout/TeacherLayout'
 import GuardianLayout from './components/layout/GuardianLayout'
+import Teachers from './pages/manager/Teachers'
+import Students from './pages/manager/Students'
+import Transfers from './pages/manager/Transfers'
 
 function App() {
   const { user } = useAuth()
@@ -23,11 +26,12 @@ function App() {
       }>
         <Route index element={<Navigate to="/manager/dashboard" replace />} />
         <Route path="dashboard" element={<div className="text-slate-500">لوحة التحكم — قريباً</div>} />
-        <Route path="teachers" element={<div className="text-slate-500">إدارة المعلمين — قريباً</div>} />
-        <Route path="students" element={<div className="text-slate-500">إدارة الطلاب — قريباً</div>} />
-        <Route path="transfers" element={<div className="text-slate-500">طلبات النقل — قريباً</div>} />
+        <Route path="teachers" element={<Teachers />} />
+        <Route path="students" element={<Students />} />
+        <Route path="transfers" element={<Transfers />} />
         <Route path="payments" element={<div className="text-slate-500">المدفوعات — قريباً</div>} />
         <Route path="certificates" element={<div className="text-slate-500">الشهادات — قريباً</div>} />
+        
       </Route>
 
       <Route path="/teacher" element={
