@@ -8,7 +8,9 @@ import GuardianLayout from './components/layout/GuardianLayout'
 import Teachers from './pages/manager/Teachers'
 import Students from './pages/manager/Students'
 import Transfers from './pages/manager/Transfers'
-
+import TeacherDashboard from './pages/teacher/Dashboard'
+import StudentList from './pages/teacher/StudentList'
+import StudentDetail from './pages/teacher/StudentDetail'
 function App() {
   const { user } = useAuth()
 
@@ -40,9 +42,9 @@ function App() {
         </ProtectedRoute>
       }>
         <Route index element={<Navigate to="/teacher/dashboard" replace />} />
-        <Route path="dashboard" element={<div className="text-slate-500">لوحة التحكم — قريباً</div>} />
-        <Route path="students" element={<div className="text-slate-500">قائمة الطلاب — قريباً</div>} />
-        <Route path="students/:id" element={<div className="text-slate-500">تفاصيل الطالب — قريباً</div>} />
+        <Route path="dashboard" element={<TeacherDashboard />} />
+        <Route path="students" element={<StudentList />} />
+        <Route path="students/:id" element={<StudentDetail />} />
         <Route path="payments" element={<div className="text-slate-500">المدفوعات — قريباً</div>} />
       </Route>
 
