@@ -1,6 +1,7 @@
 # PROJECT_MAP — منصة تلاوة
 
-> آخر تحديث: 7 يوليو 2026 الحالة: التخطيط المعماري — بانتظار الموافقة
+> آخر تحديث: 7 يوليو 2026
+> الحالة: Milestone 1-3 مكتمل — Milestone 4 (Guardian Experience) قيد التنفيذ
 
 ---
 
@@ -109,8 +110,9 @@
 
 | الميزة | التفاصيل |
 | --- | --- |
-| تسجيل الدخول | المعلم يسجل وقت دخول الطالب |
-| تسجيل الخروج | المعلم يسجل وقت خروج الطالب |
+| تسجيل الدخول | المعلم يضغط زر "دخول" → الوقت يُسجل تلقائياً (HH:MM:SS) |
+| تسجيل الخروج | المعلم يضغط زر "خروج" → الوقت يُسجل تلقائياً (HH:MM:SS) |
+| أزرار في القائمة | أزرار دخول/خروج تظهر مباشرة في قائمة الطلاب + في صفحة التفاصيل |
 | السجل اليومي | ولي أمر يرى: "دخل 4:30 م — خرج 6:10 م" |
 | إشعار لحظي | إشعار لولي الأمر عند الدخول وعند الخروج |
 
@@ -283,11 +285,11 @@
 ### تدفق: المعلم يسجل حفظ طالب
 
 ```
-[Teacher clicks "تسجيل حفظ" in StudentDetail.jsx]
+[Teacher clicks "حفظ" button in StudentDetail.jsx]
   ↓
-[React Form state → MemorizationForm component]
+[Modal opens → React Form state]
   ↓
-[POST /api/memorization/ via api/quran.js → Axios with JWT]
+[POST /api/quran/memorization/ via api/quran.js → Axios with JWT]
   ↓
 [Django URL → MemorizationViewSet.create()]
   ↓
@@ -306,6 +308,32 @@
 [UI updates: new record appears in list]
   ↓
 [Guardian opens app → GET /api/notifications/ → sees "حفظ جديد"]
+```
+
+### تدفق: المعلم يسجل دخول/خروج طالب (تلقائي)
+
+```
+[Teacher clicks "تسجيل دخول" button in StudentList.jsx or StudentDetail.jsx]
+  ↓
+[JavaScript captures current time: new Date().toTimeString().split(' ')[0] → "HH:MM:SS"]
+  ↓
+[POST /api/attendance/ {student, date: today, check_in_time: now}]
+  ↓
+[Django → AttendanceViewSet.create() → recorded_by = request.user]
+  ↓
+[Attendance.objects.create() → PostgreSQL]
+  ↓
+[post_save signal → Notification for guardian: "دخل محمد الساعة HH:MM"]
+  ↓
+[Response 201 → React Query invalidates 'attendance' + 'today-attendance']
+  ↓
+[UI: button changes from "تسجيل دخول" → "تسجيل خروج"]
+  ↓
+[Teacher clicks "تسجيل خروج" → PATCH /api/attendance/{id}/ {check_out_time: now}]
+  ↓
+[post_save signal → Notification for guardian: "خرج محمد الساعة HH:MM"]
+  ↓
+[UI: button changes to "اكتمل الحضور اليوم"]
 ```
 
 ### تدفق: التذكير الشهري للمدفوعات
@@ -577,20 +605,23 @@ class Certificate(models.Model):
 
 | Endpoint | Method | الدور | الوظيفة |
 | --- | --- | --- | --- |
-| `/api/attendance/` | GET/POST | معلم | قائمة/تسجيل حضور |
-| `/api/attendance/today/` | GET | معلم | حضور اليوم لطلابه |
-| `/api/attendance/{id}/` | PATCH | معلم | تحديث (إضافة وقت خروج) |
+| `/api/attendance/` | GET/POST | معلم | قائمة/تسجيل حضور (POST = check-in تلقائي) |
+| `/api/attendance/{id}/` | GET/PATCH | معلم | تحديث (PATCH = إضافة check_out_time تلقائي) |
+| `/api/attendance/?student={id}` | GET | معلم | فلترة حضور بطالب |
 
 #### Quran
 
 | Endpoint | Method | الدور | الوظيفة |
 | --- | --- | --- | --- |
-| `/api/memorization/` | GET/POST | معلم | سجلات الحفظ |
-| `/api/memorization/{id}/` | GET/PATCH | معلم | تفاصيل/تعديل سجل |
-| `/api/reviews/` | GET/POST | معلم | سجلات المراجعة |
-| `/api/reviews/{id}/` | GET/PATCH | معلم | تفاصيل/تعديل سجل |
-| `/api/notes/` | GET/POST | معلم/ولي أمر | الملاحظات (معلم يكتب، ولي أمر يقرأ) |
-| `/api/notes/{id}/read/` | PATCH | ولي أمر | تعليم كمقروء |
+| `/api/quran/memorization/` | GET/POST | معلم | سجلات الحفظ |
+| `/api/quran/memorization/{id}/` | GET/PATCH | معلم | تفاصيل/تعديل سجل |
+| `/api/quran/memorization/?student={id}` | GET | معلم | فلترة حفظ بطالب |
+| `/api/quran/reviews/` | GET/POST | معلم | سجلات المراجعة |
+| `/api/quran/reviews/{id}/` | GET/PATCH | معلم | تفاصيل/تعديل سجل |
+| `/api/quran/reviews/?student={id}` | GET | معلم | فلترة مراجعة بطالب |
+| `/api/quran/notes/` | GET/POST | معلم/ولي أمر | الملاحظات (معلم يكتب، ولي أمر يقرأ) |
+| `/api/quran/notes/{id}/` | GET/PATCH | معلم | تفاصيل/تعديل ملاحظة |
+| `/api/quran/notes/?student={id}` | GET | معلم/ولي أمر | فلترة ملاحظات بطالب |
 
 #### Finance
 
@@ -606,7 +637,8 @@ class Certificate(models.Model):
 | Endpoint | Method | الدور | الوظيفة |
 | --- | --- | --- | --- |
 | `/api/notifications/` | GET | الكل | إشعارات المستخدم |
-| `/api/notifications/{id}/read/` | PATCH | الكل | تعليم كمقروء |
+| `/api/notifications/{id}/` | PATCH | الكل | تعليم كمقروء |
+| `/api/notifications/mark_all_read/` | POST | الكل | تعليم الكل كمقروء |
 | `/api/notifications/unread_count/` | GET | الكل | عدد غير المقروء |
 
 #### Certificates
@@ -726,6 +758,8 @@ tilawa/
 │   │   │   ├── views.py
 │   │   │   ├── urls.py
 │   │   │   ├── signals.py
+│   │   │   ├── apps.py
+│   │   │   ├── admin.py
 │   │   │   └── migrations/
 │   │   ├── quran/
 │   │   │   ├── models.py
@@ -733,6 +767,8 @@ tilawa/
 │   │   │   ├── views.py
 │   │   │   ├── urls.py
 │   │   │   ├── signals.py
+│   │   │   ├── apps.py
+│   │   │   ├── admin.py
 │   │   │   └── migrations/
 │   │   ├── finance/
 │   │   │   ├── models.py
@@ -749,6 +785,7 @@ tilawa/
 │   │   │   ├── serializers.py
 │   │   │   ├── views.py
 │   │   │   ├── urls.py
+│   │   │   ├── admin.py
 │   │   │   └── migrations/
 │   │   └── certificates/
 │   │       ├── models.py
@@ -1060,17 +1097,17 @@ App.jsx
 
 ### مهام معلقة (Pending Tasks)
 
-- [ ] إنشاء `DESIGN_MAP.md`
+- [x] إنشاء `DESIGN_MAP.md`
 
-- [ ] تهيئة مشروع Django + Poetry
+- [x] تهيئة مشروع Django + Poetry
 
-- [ ] تهيئة مشروع React + Vite + TailwindCSS
+- [x] تهيئة مشروع React + Vite + TailwindCSS
 
-- [ ] تنفيذ Milestone 1 (Foundation)
+- [x] تنفيذ Milestone 1 (Foundation)
 
-- [ ] تنفيذ Milestone 2 (Student Management)
+- [x] تنفيذ Milestone 2 (Student Management)
 
-- [ ] تنفيذ Milestone 3 (Daily Operations)
+- [x] تنفيذ Milestone 3 (Daily Operations)
 
 - [ ] تنفيذ Milestone 4 (Guardian Experience)
 
@@ -1088,7 +1125,7 @@ App.jsx
 | --- | --- | --- | --- |
 | M1 | Foundation | Django + Poetry setup, Custom User, JWT auth, React + Vite + TailwindCSS, Login page, Auth context, Role-based routing | مستخدم يسجل دخول ويرى لوحة تحكم فارغة حسب دوره |
 | M2 | Student Management | School, Teacher, Guardian, Student models + APIs + CRUD pages | مدير يضيف معلم وولي أمر وطالب ويربطهم |
-| M3 | Daily Operations | Attendance, Memorization, Review, Notes models + APIs + signals → notifications + teacher pages | معلم يسجل حضور وحفظ ومراجعة وملاحظة لطالب |
+| M3 | Daily Operations | Attendance (أزرار دخول/خروج تلقائية), Memorization, Review, Notes models + APIs + signals → notifications + teacher pages + NotificationBell | معلم يسجل دخول/خروج تلقائي + حفظ ومراجعة وملاحظة لطالب + إشعارات تصل لولي الأمر |
 | M4 | Guardian Experience | Guardian dashboard, child detail, notifications polling | ولي أمر يرى كل بيانات طفله ويستلم إشعارات |
 | M5 | Finance | Payment model + APIs + reminder command + payment pages (3 roles) | معلم يسجل دفعة → ولي أمر يرى "مسدد" → مدير يرى الكل |
 | M6 | Transfers & Certificates | Transfer requests + approval, Certificate model + PDF generation | طلب نقل يُوافق عليه + شهادة PDF تُولد وتُحمّل |
