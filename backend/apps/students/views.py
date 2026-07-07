@@ -1,3 +1,74 @@
-from django.shortcuts import render
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 
-# Create your views here.
+from .models import Teacher, Guardian, Student, TransferRequest
+from .serializers import (TeacherSerializer, GuardianSerializer,
+                          StudentSerializer, TransferRequestSerializer)
+from apps.accounts.permissions import IsManager
+
+
+class TeacherViewSet(viewsets.ModelViewSet):
+    serializer_class = TeacherSerializer
+    permission_classes = [IsAuthenticated, IsManager]
+
+    def get_queryset(self):
+        return Teacher.objects.filter(user__school=self.request.user.school)
+
+
+class GuardianViewSet(viewsets.ModelViewSet):
+    serializer_class = GuardianSerializer
+    permission_classes = [IsAuthenticated, IsManager]
+
+    def get_queryset(self):
+        return Guardian.objects.filter(user__school=self.request.user.school)
+
+
+class StudentViewSet(viewsets.ModelViewSet):
+    serializer_class = StudentSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        qs = Student.objects.filter(school=self.request.user.school)
+        if self.request.user.role == "teacher":
+            teacher = Teacher.objects.get(user=self.request.user)
+            qs = qs.filter(teacher=teacher)
+        elif self.request.user.role == "guardian":
+            guardian = Guardian.objects.get(user=self.request.user)
+            qs = qs.filter(guardian=guardian)
+        return qs
+
+    def perform_create(self, serializer):
+        serializer.save(school=self.request.user.school)
+
+
+class TransferRequestViewSet(viewsets.ModelViewSet):
+    serializer_class = TransferRequestSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        qs = TransferRequest.objects.filter(student__school=self.request.user.school)
+        if self.request.user.role == "teacher":
+            teacher = Teacher.objects.get(user=self.request.user)
+            qs = qs.filter(from_teacher=teacher)
+        return qs
+
+    def perform_create(self, serializer):
+        serializer.save(requested_by=self.request.user)
+
+    @action(detail=True, methods=["patch"])
+    def approve(self, request, pk=None):
+        transfer = self.get_object()
+        transfer.status = "approved"
+        transfer.save()
+        transfer.student.teacher = transfer.to_teacher
+        transfer.student.save()
+        return Response({"status": "approved"})
+
+    @action(detail=True, methods=["patch"])
+    def reject(self, request, pk=None):
+        transfer = self.get_object()
+        transfer.status = "rejected"
+        transfer.save()
+        return Response({"status": "rejected"})
