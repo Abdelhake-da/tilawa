@@ -47,3 +47,6 @@ htmlcov/
 # Build
 dist/
 build/
+
+# Temporary test scripts
+help_test.txt
