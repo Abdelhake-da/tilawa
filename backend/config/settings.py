@@ -139,3 +139,63 @@ AUTH_USER_MODEL = 'accounts.User'
 
 CORS_ALLOW_ALL_ORIGINS = True
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+    ],
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+}
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,  # Keep Django's default loggers
+
+    'formatters': {
+        'verbose': {                    # Message format
+            'format': '[{asctime}] {levelname} {name}: {message}',
+            'style': '{',
+        },
+    },
+    # Result: [2026-07-07 14:30:15] ERROR tilawa.accounts: Failed login attempt
+
+    'handlers': {
+        'console': {                    # Prints to Terminal
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+        'file': {                       # Writes to file
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': BASE_DIR / 'logs' / 'tilawa.log',
+            'maxBytes': 20 * 1024 * 1024,  # 20MB then creates a new file
+            'backupCount': 3,              # Keeps only 3 old files
+            'formatter': 'verbose',
+        },
+    },
+
+    'loggers': {
+        'django': {                     # Django's own messages
+            'handlers': ['console'],    # Terminal only
+            'level': 'INFO',
+        },
+        'tilawa': {                     # Our app messages
+            'handlers': ['console', 'file'],  # Terminal + file
+            'level': 'DEBUG',
+        },
+    },
+    'root': {                           # Default for anything else
+        'handlers': ['console'],
+        'level': 'WARNING',
+    },
+}
