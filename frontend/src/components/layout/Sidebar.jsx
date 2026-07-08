@@ -1,10 +1,11 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, Users, GraduationCap, ArrowLeftRight, Wallet, Award, X } from 'lucide-react'
+import { LayoutDashboard, Users, UserCog, GraduationCap, ArrowLeftRight, Wallet, Award, X } from 'lucide-react'
 
 const menuItems = {
   manager: [
     { to: '/manager/dashboard', label: 'لوحة التحكم', icon: LayoutDashboard },
     { to: '/manager/teachers', label: 'المعلمون', icon: GraduationCap },
+    { to: '/manager/guardians', label: 'أولياء الأمور', icon: UserCog },
     { to: '/manager/students', label: 'الطلاب', icon: Users },
     { to: '/manager/transfers', label: 'طلبات النقل', icon: ArrowLeftRight },
     { to: '/manager/payments', label: 'المدفوعات', icon: Wallet },
