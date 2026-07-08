@@ -27,7 +27,7 @@ class Student(models.Model):
 class TransferRequest(models.Model):
     student = models.ForeignKey("Student", on_delete=models.CASCADE, related_name="transfers")
     from_teacher = models.ForeignKey("Teacher", on_delete=models.CASCADE, related_name="outgoing_transfers")
-    to_teacher = models.ForeignKey("Teacher", on_delete=models.CASCADE, related_name="incoming_transfers")
+    to_teacher = models.ForeignKey("Teacher", on_delete=models.SET_NULL, null=True, blank=True, related_name="incoming_transfers")
     reason = models.TextField()
     status = models.CharField(
         max_length=10,

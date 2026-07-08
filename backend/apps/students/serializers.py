@@ -83,10 +83,12 @@ class TransferRequestSerializer(serializers.ModelSerializer):
                   "to_teacher", "to_teacher_name", "reason", "status",
                   "requested_by", "created_at")
         read_only_fields = ("id", "status", "created_at", "student_name",
-                            "from_teacher_name", "to_teacher_name", "requested_by")
+                            "from_teacher", "from_teacher_name", "to_teacher", "to_teacher_name", "requested_by")
 
     def get_from_teacher_name(self, obj):
         return obj.from_teacher.user.get_full_name() or obj.from_teacher.user.username
 
     def get_to_teacher_name(self, obj):
-        return obj.to_teacher.user.get_full_name() or obj.to_teacher.user.username
+        if obj.to_teacher:
+            return obj.to_teacher.user.get_full_name() or obj.to_teacher.user.username
+        return None

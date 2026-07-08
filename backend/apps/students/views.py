@@ -24,6 +24,13 @@ class GuardianViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return Guardian.objects.filter(user__school=self.request.user.school)
 
+    @action(detail=True, methods=["get"])
+    def children(self, request, pk=None):
+        guardian = self.get_object()
+        students = Student.objects.filter(guardian=guardian)
+        serializer = StudentSerializer(students, many=True)
+        return Response(serializer.data)
+
 
 class StudentViewSet(viewsets.ModelViewSet):
     serializer_class = StudentSerializer
@@ -55,14 +62,23 @@ class TransferRequestViewSet(viewsets.ModelViewSet):
         return qs
 
     def perform_create(self, serializer):
-        serializer.save(requested_by=self.request.user)
+        teacher = Teacher.objects.get(user=self.request.user)
+        serializer.save(requested_by=self.request.user, from_teacher=teacher)
 
     @action(detail=True, methods=["patch"])
     def approve(self, request, pk=None):
         transfer = self.get_object()
+        to_teacher_id = request.data.get("to_teacher")
+        if not to_teacher_id:
+            return Response({"error": "يجب تحديد المعلم الجديد"}, status=400)
+        try:
+            to_teacher = Teacher.objects.get(id=to_teacher_id, user__school=request.user.school)
+        except Teacher.DoesNotExist:
+            return Response({"error": "المعلم غير موجود"}, status=400)
         transfer.status = "approved"
+        transfer.to_teacher = to_teacher
         transfer.save()
-        transfer.student.teacher = transfer.to_teacher
+        transfer.student.teacher = to_teacher
         transfer.student.save()
         return Response({"status": "approved"})
 
