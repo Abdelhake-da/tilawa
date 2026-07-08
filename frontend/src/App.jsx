@@ -17,6 +17,10 @@ import TeacherPayments from './pages/teacher/Payments'
 import ManagerPayments from './pages/manager/Payments'
 import ManagerCertificates from './pages/manager/Certificates'
 import GuardianCertificates from './pages/guardian/Certificates'
+import ManagerDashboard from './pages/manager/Dashboard'
+import Guardians from './pages/manager/Guardians'
+import GuardianDetail from './pages/manager/GuardianDetail'
+
 function App() {
   const { user } = useAuth()
 
@@ -33,13 +37,14 @@ function App() {
         </ProtectedRoute>
       }>
         <Route index element={<Navigate to="/manager/dashboard" replace />} />
-        <Route path="dashboard" element={<div className="text-slate-500">لوحة التحكم — قريباً</div>} />
+        <Route path="dashboard" element={<ManagerDashboard />} />
         <Route path="teachers" element={<Teachers />} />
+        <Route path="guardians" element={<Guardians />} />
+        <Route path="guardians/:id" element={<GuardianDetail />} />
         <Route path="students" element={<Students />} />
         <Route path="transfers" element={<Transfers />} />
         <Route path="payments" element={<ManagerPayments />} />
         <Route path="certificates" element={<ManagerCertificates />} />
-        
       </Route>
 
       <Route path="/teacher" element={
