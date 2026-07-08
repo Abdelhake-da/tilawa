@@ -1,17 +1,18 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { fetchStudent } from '../../api/students'
+import { fetchStudent, fetchTeachers, createTransfer } from '../../api/students'
 import { fetchAttendanceByStudent, createAttendance, updateAttendance } from '../../api/attendance'
 import { createMemorization, createReview, createNote } from '../../api/quran'
 import { fetchMemorizationByStudent, fetchReviewsByStudent, fetchNotesByStudent } from '../../api/quran'
+import { createCertificate } from '../../api/certificates'
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
 import Modal from '../../components/ui/Modal'
 import Badge from '../../components/ui/Badge'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
-import { ArrowRight, CalendarCheck, BookOpen, RotateCcw, MessageSquare } from 'lucide-react'
+import { ArrowRight, CalendarCheck, BookOpen, RotateCcw, MessageSquare, ArrowRightLeft, Award } from 'lucide-react'
 
 const qualityOptions = [
   { value: 'excellent', label: 'ممتاز' },
@@ -67,6 +68,14 @@ export default function StudentDetail() {
     },
   })
 
+  const { data: teachers } = useQuery({
+    queryKey: ['teachers'],
+    queryFn: async () => {
+      const res = await fetchTeachers()
+      return res.data.results
+    },
+  })
+
   const checkInMut = useMutation({
     mutationFn: () => {
       const now = new Date().toTimeString().split(' ')[0]
@@ -98,11 +107,15 @@ export default function StudentDetail() {
       if (modal === 'memorization') return createMemorization({ ...data, student: id })
       if (modal === 'review') return createReview({ ...data, student: id })
       if (modal === 'note') return createNote({ ...data, student: id })
+      if (modal === 'transfer') return createTransfer({ ...data, student: id })
+      if (modal === 'certificate') return createCertificate({ ...data, student: id })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['memorization', id] })
       queryClient.invalidateQueries({ queryKey: ['reviews', id] })
       queryClient.invalidateQueries({ queryKey: ['notes', id] })
+      queryClient.invalidateQueries({ queryKey: ['transfers'] })
+      queryClient.invalidateQueries({ queryKey: ['certificates'] })
       setModal(null)
       setForm({})
     },
@@ -166,6 +179,12 @@ export default function StudentDetail() {
         </Button>
         <Button onClick={() => openModal('note')} variant="secondary" size="sm">
           <span className="flex items-center gap-2"><MessageSquare size={16} /> ملاحظة</span>
+        </Button>
+        <Button onClick={() => openModal('transfer')} variant="secondary" size="sm">
+          <span className="flex items-center gap-2"><ArrowRightLeft size={16} /> طلب نقل</span>
+        </Button>
+        <Button onClick={() => openModal('certificate')} variant="secondary" size="sm">
+          <span className="flex items-center gap-2"><Award size={16} /> طلب شهادة</span>
         </Button>
       </div>
 
@@ -348,6 +367,43 @@ export default function StudentDetail() {
           </div>
           <div className="flex gap-3 pt-2">
             <Button type="submit" loading={createMut.isPending}>حفظ</Button>
+            <Button variant="secondary" onClick={() => setModal(null)}>إلغاء</Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Transfer Modal */}
+      <Modal open={modal === 'transfer'} onClose={() => setModal(null)} title="طلب نقل الطالب">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">السبب</label>
+            <textarea
+              value={form.reason || ''}
+              onChange={(e) => setForm({ ...form, reason: e.target.value })}
+              rows={3}
+              required
+              className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition"
+            />
+          </div>
+          <div className="flex gap-3 pt-2">
+            <Button type="submit" loading={createMut.isPending}>إرسال</Button>
+            <Button variant="secondary" onClick={() => setModal(null)}>إلغاء</Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Certificate Modal */}
+      <Modal open={modal === 'certificate'} onClose={() => setModal(null)} title="طلب شهادة">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <Input
+            label="عنوان الشهادة"
+            placeholder="مثلاً: ختمة كاملة، حفظ جزء عم"
+            value={form.title || ''}
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
+            required
+          />
+          <div className="flex gap-3 pt-2">
+            <Button type="submit" loading={createMut.isPending}>إرسال</Button>
             <Button variant="secondary" onClick={() => setModal(null)}>إلغاء</Button>
           </div>
         </form>
