@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { fetchTransfers, approveTransfer, rejectTransfer } from '../../api/students'
+import { fetchTransfers, approveTransfer, rejectTransfer, fetchTeachers } from '../../api/students'
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
+import Modal from '../../components/ui/Modal'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
 import EmptyState from '../../components/ui/EmptyState'
 import { Check, X } from 'lucide-react'
@@ -15,6 +17,8 @@ const statusMap = {
 
 export default function Transfers() {
   const queryClient = useQueryClient()
+  const [approveTarget, setApproveTarget] = useState(null)
+  const [selectedTeacher, setSelectedTeacher] = useState('')
 
   const { data: transfers, isLoading } = useQuery({
     queryKey: ['transfers'],
@@ -24,9 +28,21 @@ export default function Transfers() {
     },
   })
 
+  const { data: teachers } = useQuery({
+    queryKey: ['teachers'],
+    queryFn: async () => {
+      const res = await fetchTeachers()
+      return res.data.results
+    },
+  })
+
   const approveMut = useMutation({
-    mutationFn: (id) => approveTransfer(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['transfers'] }),
+    mutationFn: ({ id, toTeacher }) => approveTransfer(id, { to_teacher: toTeacher }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transfers'] })
+      setApproveTarget(null)
+      setSelectedTeacher('')
+    },
   })
 
   const rejectMut = useMutation({
@@ -62,7 +78,7 @@ export default function Transfers() {
                   <tr key={t.id} className="border-b border-slate-100 hover:bg-slate-50">
                     <td className="p-4 font-medium text-slate-800">{t.student_name}</td>
                     <td className="p-4 text-slate-600 text-sm">{t.from_teacher_name}</td>
-                    <td className="p-4 text-slate-600 text-sm">{t.to_teacher_name}</td>
+                    <td className="p-4 text-slate-600 text-sm">{t.to_teacher_name || '—'}</td>
                     <td className="p-4 text-slate-600 text-sm max-w-xs truncate">{t.reason}</td>
                     <td className="p-4">
                       <Badge color={status.color}>{status.label}</Badge>
@@ -71,7 +87,7 @@ export default function Transfers() {
                       {t.status === 'pending' && (
                         <div className="flex gap-2">
                           <button
-                            onClick={() => approveMut.mutate(t.id)}
+                            onClick={() => { setApproveTarget(t); setSelectedTeacher('') }}
                             className="text-emerald-600 hover:text-emerald-800"
                             title="موافقة"
                           >
@@ -94,6 +110,36 @@ export default function Transfers() {
           </table>
         )}
       </Card>
+
+      {approveTarget && (
+        <Modal open={true} onClose={() => setApproveTarget(null)} title={`موافقة على نقل: ${approveTarget.student_name}`}>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">المعلم الجديد</label>
+              <select
+                value={selectedTeacher}
+                onChange={(e) => setSelectedTeacher(e.target.value)}
+                required
+                className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition"
+              >
+                <option value="">اختر معلم</option>
+                {teachers?.filter((tch) => tch.id !== approveTarget.from_teacher).map((tch) => (
+                  <option key={tch.id} value={tch.id}>{tch.username}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button
+                onClick={() => approveMut.mutate({ id: approveTarget.id, toTeacher: selectedTeacher })}
+                loading={approveMut.isPending}
+              >
+                تأكيد النقل
+              </Button>
+              <Button variant="secondary" onClick={() => setApproveTarget(null)}>إلغاء</Button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }
