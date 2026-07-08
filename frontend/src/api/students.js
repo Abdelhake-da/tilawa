@@ -8,6 +8,8 @@ export const deleteTeacher = (id) => client.delete(`/students/teachers/${id}/`)
 
 // Guardians
 export const fetchGuardians = () => client.get('/students/guardians/')
+export const fetchGuardian = (id) => client.get(`/students/guardians/${id}/`)
+export const fetchGuardianChildren = (id) => client.get(`/students/guardians/${id}/children/`)
 export const createGuardian = (data) => client.post('/students/guardians/', data)
 
 // Students
@@ -20,5 +22,5 @@ export const deleteStudent = (id) => client.delete(`/students/students/${id}/`)
 // Transfers
 export const fetchTransfers = () => client.get('/students/transfers/')
 export const createTransfer = (data) => client.post('/students/transfers/', data)
-export const approveTransfer = (id) => client.patch(`/students/transfers/${id}/approve/`)
+export const approveTransfer = (id, data) => client.patch(`/students/transfers/${id}/approve/`, data)
 export const rejectTransfer = (id) => client.patch(`/students/transfers/${id}/reject/`)
